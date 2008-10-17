@@ -5,7 +5,7 @@ use Moose::Util::TypeConstraints;
 use MooseX::Types::Path::Class;
 use Path::Class;
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.02';
 our $AUTHORITY = 'cpan:FAYLAND';
 
 has 'control_name' => (
@@ -100,12 +100,15 @@ sub is_server_running {
     my $pid_file = $self->pid_file;
     
     # no pid file, no server running ...
-    if ($pid_file and $pid_file ne Path::Class::File->new()) {
+    if ($pid_file and $pid_file ne Path::Class::File->new('/tmp/unknown.pid')) {
         return 0 if (not -s $self->pid_file);
     }
 
+    my $server_pid = $self->get_server_pid;
+    return 0 if ( $server_pid == 0 );
+
     # check it ...
-    kill(0, $self->get_server_pid) ? 1 : 0;
+    kill(0, $server_pid) ? 1 : 0;
 }
 
 sub start {
@@ -211,7 +214,7 @@ To find a pid file for b<control_name>
 
 if the pid file is optional for b<control_name> like perlbal, we return
 
-    return Path::Class::File->new();
+    Path::Class::File->new('/tmp/unknown.pid')
 
 =head3 construct_command_line
 
